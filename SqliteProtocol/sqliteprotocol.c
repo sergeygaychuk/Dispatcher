@@ -137,8 +137,7 @@ struct sp_device_list {
     sp_disposable m_Disposer;
     int m_Length;
     sp_device_i *m_Devices;
-    void (*init_device_list)(sp_device_list *aThis, int aLength);
-    void (*set_device)(sp_device_list *aThis, int aIdx, const char *aAddress, int aType);
+    void (*add_device)(sp_device_list *aThis, const char *aAddress, int aType);
 };
 
 void sp_device_list_destructor(sp_disposable* aThis) {
@@ -163,12 +162,27 @@ void sp_device_list_set_device(sp_device_list *aThis, int aIdx, const char *aAdd
   }
 }
 
+void sp_device_list_add_device(sp_device_list *aThis, const char *aAddress, int aType) {
+    if (aThis) {
+        int aOldLength = 0;
+        sp_device_i *aOldDevices = 0;
+        if (aThis->m_Devices) {
+            aOldDevices = aThis->m_Devices;
+            aOldLength = aThis->m_Length;
+            aThis->m_Length = 0;
+            aThis->m_Devices = 0;
+        }
+        sp_device_list_init_device_list(aThis, aOldLength + 1);
+        memcpy(aThis->m_Devices, aOldDevices, sizeof(sp_device) * aOldLength);
+        sp_device_list_set_device(aThis, aOldLength, aAddress, aType);
+    }
+}
+
 sp_device_list *sp_device_list_constructor() {
     sp_device_list *obj = (sp_device_list *)sp_zalloc(sizeof(sp_device_list));
     if (obj) {
         init_sp_disposable(&obj->m_Disposer, obj, sp_device_list_destructor);
-        obj->init_device_list = &sp_device_list_init_device_list;
-        obj->set_device = &sp_device_list_set_device;
+        obj->add_device = &sp_device_list_add_device;
         obj->m_Devices = 0;
         obj->m_Length = 0;
     }
@@ -182,13 +196,18 @@ int sp_get_device_list(sp_device_list **aList) {
     if (!aList) return -1;
     *aList = NEW(sp_device_list);
     if (!*aList) return -1;
-
-    //TEST FILL
-    (*aList)->init_device_list(*aList, 2);
-    (*aList)->set_device(*aList, 0, "AAFF1234", SP_DEVICE_TYPE_TEMPERATURE_SENSOR);
-    (*aList)->set_device(*aList, 1, "1234AAFF", SP_DEVICE_TYPE_RELAY);
-    //TEST FILL
     return (*aList)->m_Length;
+}
+
+void sp_add_device_to_list(sp_device_list *aList, const char *aAddress, int aType) {
+    if (aList) {
+        aList->add_device(aList, aAddress, aType);
+    }
+}
+
+int sp_get_device_list_length(sp_device_list *aList) {
+    if (aList) return aList->m_Length;
+    return 0;
 }
 
 //return device on specific position

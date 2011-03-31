@@ -23,8 +23,14 @@ void TestSqliteProtocolTest::testRetrieveDeviceList()
 {
     sp_device_list *list = 0;
     int length = sp_get_device_list(&list);
-    QVERIFY2(length == 2, "Device list length is not equal to 2");
+    QVERIFY2(length == 0, "Device list length is not equal to 0");
     QVERIFY2(list, "Device list is null");
+
+    sp_add_device_to_list(list, "AAFF1234", SP_DEVICE_TYPE_TEMPERATURE_SENSOR);
+    sp_add_device_to_list(list, "1234AAFF", SP_DEVICE_TYPE_RELAY);
+
+    length = sp_get_device_list_length(list);
+    QVERIFY2(length == 2, "Device list length is not equal to 2");
 
     sp_device *device = sp_get_device_from_list(list, -1);
     QVERIFY2(!device, "Wrong device in -1 position");
@@ -48,8 +54,11 @@ void TestSqliteProtocolTest::testRetrieveDeviceData()
 {
     sp_device_list *list = 0;
     int length = sp_get_device_list(&list);
+    sp_add_device_to_list(list, "AAFF1234", SP_DEVICE_TYPE_TEMPERATURE_SENSOR);
+    sp_add_device_to_list(list, "1234AAFF", SP_DEVICE_TYPE_RELAY);
+
+    length = sp_get_device_list_length(list);
     QVERIFY2(length == 2, "Device list length is not equal to 2");
-    QVERIFY2(list, "Device list is null");
 
     sp_device *device = sp_get_device_from_list(list, 0);
     QVERIFY2(device, "Wrong device in 0 position");

@@ -20,6 +20,10 @@ struct sp_device {
 //Return pointer to device list
 //For free device list call sp_close_device_list
 int sp_get_device_list(sp_device_list **);
+//Add device to list
+void sp_add_device_to_list(sp_device_list *, const char *aAddress, int aType);
+//Return device list length
+int sp_get_device_list_length(sp_device_list *);
 //return device on specific position
 //return null if error
 sp_device* sp_get_device_from_list(sp_device_list *, int iPosition);

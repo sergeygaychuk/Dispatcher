@@ -36,6 +36,26 @@ void sp_free(void *aBuffer) {
   sp_free(obj); \
 }
 
+
+typedef struct sp_device_data sp_device_data;
+struct sp_device_data {
+    int m_Date;
+};
+
+typedef struct sp_device_data_temperature_sensor sp_device_data_temperature_sensor;
+struct sp_device_data_temperature_sensor {
+    sp_device_data m_Data;
+    double m_Temperature;
+};
+
+#define SP_DEVICE_RELAY_ON 0x01
+#define SP_DEVICE_RELAY_OFF 0x00
+typedef struct sp_device_data_relay sp_device_data_relay;
+struct sp_device_data_relay {
+    sp_device_data m_Data;
+    int m_State;
+};
+
 #define SP_DEVICE_TYPE_UNKNOWN 0xFF
 #define SP_DEVICE_TYPE_TEMPERATURE_SENSOR 0x01
 #define SP_DEVICE_TYPE_RELAY 0x02
@@ -51,6 +71,7 @@ struct sp_device_i {
     sp_device m_Device;
     sp_disposable m_Disposer;
     void (*set_device)(sp_device_i *aThis, const char *aAddress, int aType);
+    sp_device_data* (*get_device_data)(sp_device_i *aThis);
 };
 
 void sp_device_i_destructor(sp_disposable *aThis) {
@@ -68,6 +89,34 @@ void sp_device_i_set_device(sp_device_i *aThis, const char *aAddress, int aType)
   }
 }
 
+sp_device_data* sp_device_i_get_device_data(sp_device_i *aThis) {
+    if (aThis) {
+        switch (aThis->m_Device.m_Type) {
+        case SP_DEVICE_TYPE_TEMPERATURE_SENSOR:
+            {
+                sp_device_data_temperature_sensor *sensor = (sp_device_data_temperature_sensor*)sp_zalloc(sizeof(sp_device_data_temperature_sensor));
+                if (sensor) {
+                    sensor->m_Data.m_Date = 109;
+                    sensor->m_Temperature = 37.2;
+                    return (sp_device_data*)sensor;
+                }
+            }
+            break;
+        case SP_DEVICE_TYPE_RELAY:
+            {
+                sp_device_data_relay *relay = (sp_device_data_relay*)sp_zalloc(sizeof(sp_device_data_relay));
+                if (relay) {
+                    relay->m_Data.m_Date = 109;
+                    relay->m_State = SP_DEVICE_RELAY_ON;
+                    return (sp_device_data*)relay;
+                }
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
 sp_device_i* sp_device_i_constructor(int aLength) {
     int i = 0;
     sp_device_i *obj = (sp_device_i *)sp_zalloc(sizeof(sp_device_i) * aLength);
@@ -75,6 +124,7 @@ sp_device_i* sp_device_i_constructor(int aLength) {
         for (i = 0; i < aLength; ++ i) {
           init_sp_disposable(&obj[i].m_Disposer, &obj[i], sp_device_i_destructor);
           obj[i].set_device = &sp_device_i_set_device;
+          obj[i].get_device_data = &sp_device_i_get_device_data;
           obj[i].m_Device.m_Address = 0;
           obj[i].m_Device.m_Type = SP_DEVICE_TYPE_UNKNOWN;
         }
@@ -154,4 +204,15 @@ void sp_close_device_list(sp_device_list *aList) {
     if (aList) {
         DELETE(aList);
     }
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+
+sp_device_data* sp_get_device_last_data(sp_device *aDevice) {
+    if (aDevice) return ((sp_device_i*)aDevice)->get_device_data((sp_device_i*)aDevice);
+    return 0;
+}
+
+void sp_free_device_data(sp_device_data *aData) {
+    if (aData) sp_free(aData);
 }

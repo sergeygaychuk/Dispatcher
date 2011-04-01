@@ -33,24 +33,11 @@ void sp_close_device_list(sp_device_list *);
 typedef struct sp_device_data sp_device_data;
 struct sp_device_data {
     int m_Date;
-};
-
-typedef struct sp_device_data_temperature_sensor sp_device_data_temperature_sensor;
-struct sp_device_data_temperature_sensor {
-    sp_device_data m_Data;
-    double m_Temperature;
-};
-
-#define SP_DEVICE_RELAY_ON 0x01
-#define SP_DEVICE_RELAY_OFF 0x00
-typedef struct sp_device_data_relay sp_device_data_relay;
-struct sp_device_data_relay {
-    sp_device_data m_Data;
-    int m_State;
+    char *m_State;
 };
 
 sp_device_data* sp_get_device_last_data(sp_device *);
-void sp_free_device_data(sp_device_data *);
+void sp_device_add_data(sp_device *, int, const char *);
 
 #ifdef __cplusplus
 }

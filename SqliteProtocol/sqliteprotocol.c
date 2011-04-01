@@ -40,20 +40,7 @@ void sp_free(void *aBuffer) {
 typedef struct sp_device_data sp_device_data;
 struct sp_device_data {
     int m_Date;
-};
-
-typedef struct sp_device_data_temperature_sensor sp_device_data_temperature_sensor;
-struct sp_device_data_temperature_sensor {
-    sp_device_data m_Data;
-    double m_Temperature;
-};
-
-#define SP_DEVICE_RELAY_ON 0x01
-#define SP_DEVICE_RELAY_OFF 0x00
-typedef struct sp_device_data_relay sp_device_data_relay;
-struct sp_device_data_relay {
-    sp_device_data m_Data;
-    int m_State;
+    char *m_State;
 };
 
 #define SP_DEVICE_TYPE_UNKNOWN 0xFF
@@ -70,14 +57,19 @@ typedef struct sp_device_i sp_device_i;
 struct sp_device_i {
     sp_device m_Device;
     sp_disposable m_Disposer;
+    sp_device_data m_Data;
     void (*set_device)(sp_device_i *aThis, const char *aAddress, int aType);
-    sp_device_data* (*get_device_data)(sp_device_i *aThis);
+    sp_device_data* (*get_data)(sp_device_i *aThis);
+    void (*add_data)(sp_device_i *aThis, int aDate, const char *aState);
 };
 
 void sp_device_i_destructor(sp_disposable *aThis) {
   sp_device_i *th = (sp_device_i*)aThis->m_This;
   if (th->m_Device.m_Address) {
     sp_free(th->m_Device.m_Address);
+  }
+  if (th->m_Data.m_State) {
+      sp_free(th->m_Data.m_State);
   }
 }
 
@@ -89,32 +81,20 @@ void sp_device_i_set_device(sp_device_i *aThis, const char *aAddress, int aType)
   }
 }
 
-sp_device_data* sp_device_i_get_device_data(sp_device_i *aThis) {
+sp_device_data* sp_device_i_get_data(sp_device_i *aThis) {
     if (aThis) {
-        switch (aThis->m_Device.m_Type) {
-        case SP_DEVICE_TYPE_TEMPERATURE_SENSOR:
-            {
-                sp_device_data_temperature_sensor *sensor = (sp_device_data_temperature_sensor*)sp_zalloc(sizeof(sp_device_data_temperature_sensor));
-                if (sensor) {
-                    sensor->m_Data.m_Date = 109;
-                    sensor->m_Temperature = 37.2;
-                    return (sp_device_data*)sensor;
-                }
-            }
-            break;
-        case SP_DEVICE_TYPE_RELAY:
-            {
-                sp_device_data_relay *relay = (sp_device_data_relay*)sp_zalloc(sizeof(sp_device_data_relay));
-                if (relay) {
-                    relay->m_Data.m_Date = 109;
-                    relay->m_State = SP_DEVICE_RELAY_ON;
-                    return (sp_device_data*)relay;
-                }
-            }
-            break;
-        }
+        return &aThis->m_Data;
     }
     return 0;
+}
+
+void sp_device_i_add_data(sp_device_i *aThis, int aDate, const char *aState) {
+    if (aThis) {
+        if (aThis->m_Data.m_State) sp_free(aThis->m_Data.m_State);
+        aThis->m_Data.m_Date = aDate;
+        aThis->m_Data.m_State = sp_zalloc(strlen(aState) + 1);
+        strcpy(aThis->m_Data.m_State, aState);
+    }
 }
 
 sp_device_i* sp_device_i_constructor(int aLength) {
@@ -124,9 +104,12 @@ sp_device_i* sp_device_i_constructor(int aLength) {
         for (i = 0; i < aLength; ++ i) {
           init_sp_disposable(&obj[i].m_Disposer, &obj[i], sp_device_i_destructor);
           obj[i].set_device = &sp_device_i_set_device;
-          obj[i].get_device_data = &sp_device_i_get_device_data;
+          obj[i].get_data = &sp_device_i_get_data;
+          obj[i].add_data = &sp_device_i_add_data;
           obj[i].m_Device.m_Address = 0;
           obj[i].m_Device.m_Type = SP_DEVICE_TYPE_UNKNOWN;
+          obj[i].m_Data.m_Date = 0;
+          obj[i].m_Data.m_State = 0;
         }
     }
     return obj;
@@ -228,10 +211,12 @@ void sp_close_device_list(sp_device_list *aList) {
 //////////////////////////////////////////////////////////////////////////////////
 
 sp_device_data* sp_get_device_last_data(sp_device *aDevice) {
-    if (aDevice) return ((sp_device_i*)aDevice)->get_device_data((sp_device_i*)aDevice);
+    if (aDevice) return ((sp_device_i*)aDevice)->get_data((sp_device_i*)aDevice);
     return 0;
 }
 
-void sp_free_device_data(sp_device_data *aData) {
-    if (aData) sp_free(aData);
+void sp_device_add_data(sp_device *aDevice, int aDate, const char *aState) {
+    if (aDevice) {
+        ((sp_device_i *)aDevice)->add_data(((sp_device_i *)aDevice), aDate, aState);
+    }
 }

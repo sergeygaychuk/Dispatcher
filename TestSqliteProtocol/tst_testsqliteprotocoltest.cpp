@@ -65,24 +65,28 @@ void TestSqliteProtocolTest::testRetrieveDeviceData()
     QVERIFY2(!strcmp(device->m_Address, "AAFF1234"), "Wrong device address");
     QVERIFY2(device->m_Type == SP_DEVICE_TYPE_TEMPERATURE_SENSOR, "Wrong device type");
 
-    sp_device_data *aTemperatureData = 0;
+    sp_device_add_data(device, 109, "37.2");
+    sp_device_data *aTemperatureData = sp_get_device_last_data(device);
+    QVERIFY2(aTemperatureData, "Temperature data is null");
+    QVERIFY2(!strcmp(aTemperatureData->m_State, "37.2"), "Temperature sensor temp is not equal to 37.2");
+    QVERIFY2(aTemperatureData->m_Date == 109, "Temperature sensor date is not equal to 109");
+
+    sp_device_add_data(device, 110, "37.6");
     aTemperatureData = sp_get_device_last_data(device);
     QVERIFY2(aTemperatureData, "Temperature data is null");
-    sp_device_data_temperature_sensor *aTempSensor = (sp_device_data_temperature_sensor*)aTemperatureData;
-    QVERIFY2(aTempSensor->m_Temperature == 37.2, "Temperature sensor temp is not equal to 37.2");
-    sp_free_device_data(aTemperatureData);
+    QVERIFY2(!strcmp(aTemperatureData->m_State, "37.6"), "Temperature sensor temp is not equal to 37.6");
+    QVERIFY2(aTemperatureData->m_Date == 110, "Temperature sensor date is not equal to 110");
 
     device = sp_get_device_from_list(list, 1);
     QVERIFY2(device, "Wrong device in 1 position");
     QVERIFY2(!strcmp(device->m_Address, "1234AAFF"), "Wrong device address");
     QVERIFY2(device->m_Type == SP_DEVICE_TYPE_RELAY, "Wrong device type");
 
-    sp_device_data *aRelayData = 0;
-    aRelayData = sp_get_device_last_data(device);
+    sp_device_add_data(device, 111, "on");
+    sp_device_data *aRelayData = sp_get_device_last_data(device);
     QVERIFY2(aRelayData, "Relay data is null");
-    sp_device_data_relay *aRelay = (sp_device_data_relay*)aRelayData;
-    QVERIFY2(aRelay->m_State == SP_DEVICE_RELAY_ON, "Relay status is not ON");
-    sp_free_device_data(aRelayData);
+    QVERIFY2(!strcmp(aRelayData->m_State, "on"), "Relay is not on");
+    QVERIFY2(aRelayData->m_Date == 111, "Relay date is not equal to 109");
 
     sp_close_device_list(list);
 }

@@ -84,7 +84,13 @@ void sp_db_destructor(sp_disposable *aThis) {
 
 int sp_db_connect(sp_db *aThis) {
     if (aThis && !aThis->m_DB) {
-        if (sqlite3_open("../test.sqlite", &aThis->m_DB) == SQLITE_OK) {
+        if (sqlite3_open(
+            #if defined (WIN32) || defined (WIN64)
+                    "../test.sqlite"
+            #else
+                    "/tmp/test.sqlite"
+            #endif
+                    , &aThis->m_DB) == SQLITE_OK) {
             if ((SQLITE_OK != sqlite3_exec(aThis->m_DB,
                   "CREATE TABLE IF NOT EXISTS \
                    devices (id INTEGER PRIMARY KEY AUTOINCREMENT, \

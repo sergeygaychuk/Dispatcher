@@ -11,16 +11,13 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    mainwindow.cpp \
-    main.cpp \
-    sensor.cpp \
-    sensorcontroller.cpp
+           mainwindow.cpp \
+           sensor.cpp \
+           sensorcontroller.cpp
 
 HEADERS  += mainwindow.h \
-    mainwindow.h \
-    sensor.h \
-    sensorcontroller.h
+            sensor.h \
+            sensorcontroller.h
 
 FORMS    += mainwindow.ui
 

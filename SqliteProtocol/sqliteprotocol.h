@@ -19,7 +19,7 @@ void sp_devices_clear();
 int sp_devices_length();
 void sp_devices_enumerate(int (*)(void *aUserData, sp_device *aDevice), void *aUserData);
 
-void sp_device_add(const char *aAddress, int aType);
+sp_device* sp_device_add(const char *aAddress, int aType);
 void sp_device_free(sp_device *aDevice);
 
 typedef struct sp_device_data sp_device_data;

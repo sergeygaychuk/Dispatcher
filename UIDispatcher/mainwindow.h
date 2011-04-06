@@ -5,8 +5,8 @@
 #include <QList>
 
 class QStandardItemModel;
-class TemperatureSensorController;
-class TemperatureSensor;
+class SensorController;
+class Sensor;
 
 namespace Ui {
     class MainWindow;
@@ -21,12 +21,12 @@ public:
     ~MainWindow();
 
 protected slots:
-    void on_temperate_sensor_list_changed(QList<TemperatureSensor*> aList);
+    void on_temperate_sensor_list_changed(QList<Sensor*>);
 
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *m_Model;
-    TemperatureSensorController *m_Controller;
+    SensorController *m_Controller;
 };
 
 #endif // MAINWINDOW_H

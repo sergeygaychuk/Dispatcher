@@ -12,15 +12,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    temperaturesensorcontroller.cpp \
-    temperaturesensor.cpp \
     mainwindow.cpp \
-    main.cpp
+    main.cpp \
+    sensor.cpp \
+    sensorcontroller.cpp
 
 HEADERS  += mainwindow.h \
-    temperaturesensorcontroller.h \
-    temperaturesensor.h \
-    mainwindow.h
+    mainwindow.h \
+    sensor.h \
+    sensorcontroller.h
 
 FORMS    += mainwindow.ui
 

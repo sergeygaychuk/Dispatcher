@@ -19,7 +19,7 @@ void sp_devices_clear();
 int sp_devices_length();
 void sp_devices_enumerate(int (*)(void *aUserData, sp_device *aDevice), void *aUserData);
 
-void sp_device_add(const char *aAddress, int aType);
+sp_device* sp_device_add(const char *aAddress, int aType);
 void sp_device_free(sp_device *aDevice);
 
 typedef struct sp_device_data sp_device_data;
@@ -58,7 +58,11 @@ void sp_free(void *aBuffer) {
 }
 
 #define NEW(struct_name) (struct_name##_constructor())
-#define DELETE(obj) (obj->m_Disposer.dispose(((sp_disposable*)&obj->m_Disposer)), sp_free(obj))
+#define DELETE(obj) \
+if (obj) { \
+    obj->m_Disposer.dispose(((sp_disposable*)&obj->m_Disposer)); \
+    sp_free(obj); \
+}
 
 //////////////////DB////////////////////////////////////////////////////////
 typedef struct sp_db sp_db;
@@ -80,7 +84,7 @@ void sp_db_destructor(sp_disposable *aThis) {
 
 int sp_db_connect(sp_db *aThis) {
     if (aThis && !aThis->m_DB) {
-        if (sqlite3_open("test.sqlite", &aThis->m_DB) == SQLITE_OK) {
+        if (sqlite3_open("../test.sqlite", &aThis->m_DB) == SQLITE_OK) {
             if ((SQLITE_OK != sqlite3_exec(aThis->m_DB,
                   "CREATE TABLE IF NOT EXISTS \
                    devices (id INTEGER PRIMARY KEY AUTOINCREMENT, \
@@ -282,20 +286,29 @@ void sp_devices_enumerate(int (*aCallback)(void *aUserData, sp_device *aDevice),
     DELETE(th);
 }
 
-void sp_device_add(const char *aAddress, int aType) {
+sp_device* sp_device_add(const char *aAddress, int aType) {
+    sp_device *device = 0;
     sp_db *th = NEW(sp_db);
     if (aAddress && th) {
         sqlite3_stmt *stmt = 0;
         if (SQLITE_OK == sqlite3_prepare_v2(th->m_DB, "INSERT INTO devices(address, type) VALUES(?, ?)", -1, &stmt, 0)) {
             if (SQLITE_OK == sqlite3_bind_text(stmt, 1, aAddress, -1, 0)) {
                 if (SQLITE_OK == sqlite3_bind_int(stmt, 2, aType)) {
-                  sqlite3_step(stmt);
+                    int ret = sqlite3_step(stmt);
+                    if (SQLITE_OK == ret || SQLITE_DONE == ret) {
+                        sp_device_i *device_i = NEW(sp_device_i);
+                        device_i->set_address(device_i, aAddress);
+                        device_i->m_Device.m_Type = aType;
+                        device_i->m_ID = (int)sqlite3_last_insert_rowid(th->m_DB);
+                        device = (sp_device *)device_i;
+                    }
                 }
             }
             sqlite3_finalize(stmt);
         }
     }
     DELETE(th);
+    return device;
 }
 
 void sp_device_free(sp_device *aDevice) {

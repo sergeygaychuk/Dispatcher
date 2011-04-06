@@ -4,19 +4,22 @@
 #include <QObject>
 #include <QList>
 
-class TemperatureSensor;
+class Sensor;
 
-class TemperatureSensorController : public QObject
+class SensorController : public QObject
 {
     Q_OBJECT
 public:
-    explicit TemperatureSensorController(QObject *parent = 0);
+    explicit SensorController(QObject *parent = 0);
 
     void startRead();
 signals:
-    void listReady(QList<TemperatureSensor*> aList);
+    void listReady(QList<Sensor*> aList);
 protected slots:
     void on_timer();
+private:
+    int m_NeedUpdateList;
+    QList<Sensor*> m_List;
 };
 
 #endif // TEMPERATURESENSORCONTROLLER_H
